@@ -70,14 +70,19 @@ def test(model, dset, _cfg, logger, out_path_root):
 
       curr_index = 0
       for score in scores['pred_semantic_1_1']:
-        score = np.moveaxis(score, [0, 1, 2], [0, 2, 1]).reshape(-1).astype(np.uint16)
-        score = inv_remap_lut[score].astype(np.uint16)
+        # score = np.moveaxis(score, [0, 1, 2], [0, 2, 1]).reshape(-1).astype(np.uint16)
+        score = np.moveaxis(score, [0, 1, 2], [0, 2, 1]).astype(np.uint16)
+        # import pdb; pdb.set_trace()
+        # score = inv_remap_lut[score].astype(np.uint16)
         input_filename = dset.dataset.filepaths['3D_OCCUPANCY'][indices[curr_index]]
         filename, extension = os.path.splitext(os.path.basename(input_filename))
         sequence = os.path.dirname(input_filename).split('/')[-2]
-        out_filename = os.path.join(out_path_root, 'sequences', sequence, 'predicitons', filename + '.label')
+        # frame_id = os.path.basename(input_filename).split('.')[0].split('_')[-1]
+        # import pdb;pdb.set_trace()
+        out_filename = os.path.join(out_path_root, 'sequences', sequence, 'predicitons', filename + '.npy')
         _create_directory(os.path.dirname(out_filename))
-        score.tofile(out_filename)
+        np.save(out_filename, score)
+        # score.tofile(out_filename)
         logger.info('=> Sequence {} - File {} saved'.format(sequence, os.path.basename(out_filename)))
         curr_index += 1
 
@@ -93,9 +98,9 @@ def main():
 
   args = parse_args()
 
-  weights_f = args.weights_file
-  dataset_f = args.dataset_root
-  out_path_root = args.output_path
+  weights_f = "./LMSCNet.pth"
+  dataset_f = "/gpfsdswork/dataset/SemanticKITTI"
+  out_path_root = "/gpfsscratch/rech/kvd/uyl37fq/monoscene_preprocess/kitti/lmscnet"
 
   assert os.path.isfile(weights_f), '=> No file found at {}'
 

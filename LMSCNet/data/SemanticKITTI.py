@@ -5,6 +5,7 @@ import numpy as np
 import yaml
 import random
 import sys
+from collections import defaultdict
 
 import LMSCNet.data.io_data as SemanticKittiIO
 
@@ -40,12 +41,20 @@ class SemanticKITTI_dataloader(Dataset):
                                        2.06162300e+06, 3.69705220e+07, 1.15198800e+06, 3.34146000e+05])
 
     self.split = {'train': [0, 1, 2, 3, 4, 5, 6, 7, 9, 10], 'val': [8],
-                  'test': [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]}
+                  # 'test': [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], 
+                  'test': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
 
     for modality in self.modalities:
       if self.modalities[modality]:
         self.get_filepaths(modality)
-
+    
+    self.filepaths_filtered = defaultdict(list)
+    for modality in self.filepaths:
+      for filepath in self.filepaths[modality]:
+        frame_id = os.path.basename(filepath).split('.')[0].split('_')[-1]
+        if int(frame_id) % 5 == 0:
+            self.filepaths_filtered[modality].append(filepath)
+    self.filepaths = self.filepaths_filtered
     # if self.phase != 'test':
     #   self.check_same_nbr_files()
 
@@ -91,7 +100,7 @@ class SemanticKITTI_dataloader(Dataset):
       for sequence in sequences:
         assert len(os.listdir(sequence)) > 0, 'Error, No files in sequence: {}'.format(sequence)
         self.filepaths['3D_OCCUPANCY'] += sorted(glob(os.path.join(sequence, 'voxels', '*.bin')))
-
+    
     # if modality == '2D_RGB':
     #   self.filepaths['2D_RGB'] = []
     #   for sequence in sequences:
@@ -126,6 +135,7 @@ class SemanticKITTI_dataloader(Dataset):
 
     for modality in self.modalities:
       if (self.modalities[modality]) and (modality in self.filepaths):
+        
         data[modality] = self.get_data_modality(modality, idx, do_flip)
 
     return data, idx
